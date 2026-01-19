@@ -7,6 +7,8 @@ use App\Models\Admin;
 use Illuminate\Support\Facades\Session;
 use App\Models\category;
 use App\Models\Quiz;
+
+use App\Models\Mcq;
 class AdminController extends Controller
 {
     function login(Request $request){
@@ -109,4 +111,32 @@ class AdminController extends Controller
         'name' => $admin->name
     ]);
 }
+    function addMCQs(Request $request){
+         $admin = Session::get('admin');
+        if (!$admin) return redirect('admin-login');
+
+        $quizId = Session::get('quizDetails');
+        if (!$quizId) return redirect('/add-quiz');
+        $quiz = Quiz::findOrFail($quizId);
+
+
+        $mcq = new Mcq();
+        $mcq->question=$request->question;
+        $mcq->a=$request->a;
+        $mcq->b=$request->b;
+        $mcq->c=$request->c;
+        $mcq->d=$request->d;
+        $mcq->correct_ans=$request->correct_ans;
+        $mcq->admin_id=$admin->id;
+        $mcq->quiz_id = $quizId;                 
+        $mcq->category_id = $quiz->category_id;
+          if($mcq->save()){
+            if($request->submit=="add-more"){
+                return redirect(url()->previous());
+            }else{
+                Session::forget('quizDetails');
+                return redirect("/add-quiz");
+            }
+        }
+        }
 }

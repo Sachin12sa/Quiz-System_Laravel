@@ -14,5 +14,6 @@ Route::post("/add-category",[AdminController::class,'addCategory']);
 
 Route::get("/category/delete/{id}",[AdminController::class,'deleteCategory']);
 
-Route::get("/add-quiz",[AdminController::class,'addQuiz']);
+Route::match(['get','post'], '/add-quiz', [AdminController::class, 'addQuiz'])->name('add.quiz');
+
 

@@ -20,9 +20,8 @@
                 Add Quiz
             </h2>
 
-            <form action="/add-quiz" method="get" class="space-y-4">
-                
-
+                <form action="{{ route('add.quiz') }}" method="POST" class="space-y-4">                
+                @csrf
                 <input
                     type="text"
                     name="quiz"
@@ -45,11 +44,14 @@
                 </button>
             </form>
             @else
-            <span class="text-green-500 font-bold ">Quiz : {{session('quizDetails')->name}}</span>
+                <span class="text-green-500 font-bold">
+                    Quiz : {{ $quizDetails->name }}
+                </span>
             <h2 class="text-2xl text-center text-gray-800 mb-6">
                 Add MCQs
             </h2>
             <form action="" method="get" class="space-y-4">
+                @csrf
                  <textarea
                     type="text"
                     name="quiz"

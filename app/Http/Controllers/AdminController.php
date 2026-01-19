@@ -76,27 +76,37 @@ class AdminController extends Controller
      return redirect('admin-categories');
     }
     }
-    function addQuiz(Request $request){
-       
-        $admin = Session::get('admin'); 
-        $categories = Category::get(); 
-        if($admin){
-           $quizName = $request->input('quiz');            
-           $category_id=$request->input('category_id');
-           if($quizName && $category_id && !Session::has('quizDetails')){
-            $quiz =new Quiz();
-            $quiz->name=$quizName;
-            $quiz->category_id=$category_id;
-            if($quiz->save()){
-                Session::put('quizDetails',$quiz);
-            }
-           }
-            return view('add-quiz',["name"=>$admin->name,"categories"=>$categories]);
-        }else{
-            return redirect('admin-login');
 
-        }
 
+    function addQuiz(Request $request)
+    {
+    $admin = Session::get('admin');
+    if (!$admin) return redirect('admin-login');
+
+    $categories = Category::all();
+
+    if ($request->isMethod('post') && !Session::has('quizDetails')) {
+
+        $request->validate([
+            'quiz' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id'
+        ]);
+
+        $quiz = Quiz::create([
+            'name' => $request->quiz,
+            'category_id' => $request->category_id,
+            'creator' => $admin->name,
+        ]);
+
+        Session::put('quizDetails', $quiz->id);
     }
-}
 
+    $quizDetails = Session::has('quizDetails')
+        ? Quiz::find(Session::get('quizDetails'))
+        : null;
+
+    return view('add-quiz', compact('categories','quizDetails') + [
+        'name' => $admin->name
+    ]);
+}
+}

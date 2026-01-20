@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Mcq;
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Model;
 
 class Quiz extends Model
@@ -11,4 +13,11 @@ class Quiz extends Model
         'category_id',
         'creator'
     ];
+    function category(){
+        return $this->belongsTo(Category::class);
+    }
+    function Mcq(){
+        return $this->hasMany(Mcq::class);
+
+    }
 }

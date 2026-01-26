@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Categories</title>
+    <title>User Home</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -13,10 +13,13 @@
     <h1 class="text-4xl font-bold text-green-900 pt-10 p-5 ">Check Yours Skills</h1>
     <div class="w-full max-w-md">
         <div class="relative"> 
-            <input class="w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-2xl shadow" type="text" name="" placeholder="search quiz......">
+            <form action="search-quiz" method="get">
+            
+            <input class="w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-2xl shadow" type="text" name="search" placeholder="search quiz......">
             <button class="absolute right-2 top-3">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#00000"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>            </button>
-        </div>
+                </form>
+            </div>
     </div>
     <div class="bg-white mt-10 p-6 rounded-xl shadow-lg w-full max-w-3xl">
             <h2 class="text-2xl text-green-900   mb-4 text-center">

@@ -37,7 +37,7 @@ class AdminController extends Controller
         if($admin){
         return view('admin',["name"=>$admin->name]);
         }else{
-            return redirect('admin-login');
+            // return redirect('admin-login');
 
         }
         }

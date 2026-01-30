@@ -3,52 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Details Page</title>
-
+    <title>User Attempted Quizzes</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100">
-<x-user-navbar />
-<div class="flex flex-col min-h-screen items-center bg-gray-100">
-    <h1 class="text-4xl font-bold text-green-900 pt-10 p-5 ">User Attempted Quiz</h1>
+<body class="bg-gray-100 font-sans">
+    <x-user-navbar />
 
-    <div class="bg-white mt-10 p-6 rounded-xl shadow-lg w-full max-w-3xl">
-     
+    <div class="flex flex-col items-center min-h-screen py-10 px-4">
+        <h1 class="text-4xl font-bold text-green-900 mb-8 text-center">User Attempted Quizzes</h1>
 
-            <table class="w-full border border-gray-300">
-                <thead class="bg-gray-200">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-4xl p-6">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-green-100">
                     <tr>
-                        <th class="p-2 border w-50">S.No</th>
-                        <th class="p-2 border w-100">Name</th> 
-                        <th class="p-2 border w-50">status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">#</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quiz Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
-                <tbody>
-                @foreach ($quizRecord as $key=> $record)
-                <tr class="text-center even:bg-gray-100">
-                    <td class="p-2 border w-50 ">{{ $key+1 }}</td>
-                    <td class="p-2 border w-100">{{ $record->name }}</td>
-                    <td class="p-2 border w-50">
-                        @if($record->status==2)
-                        <span class="text-green-500">Completed</span>
-                        @else
-                        <span class="text-orange-500">Not Complete</span>
-                        @endif
-                    </td>
-                    
-                </tr>
-                @endforeach
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($quizRecord as $record)
+                    <tr class="hover:bg-green-50 transition duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $loop->iteration }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $record->quiz->name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($record->status == 'completed')
+                                @if($record->can_download)
+                                    <a href="{{ route('download.certificate') }}" 
+                                       class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-md transition">
+                                        Download Certificate
+                                    </a>
+                                @else
+                                    <span class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded-lg font-medium">Score below 70%  <br> (Cannot download Certificate)</span>
+                                @endif
+                            @else
+                                <a href="{{ route('resume.quiz', $record->quiz->id) }}" 
+                                   class="inline-block bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md transition font-medium">
+                                    Resume Quiz
+                                </a>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
                 </tbody>
-                
-        </div>
-        
-
             </table>
         </div>
-         <div class="mb-7 mt-5">
-                    {{$quizRecord->links()}}
-                </div>
-</div>
-<x-footer-user> </x-footer-user>
 
+        <div class="mt-6">
+            {{ $quizRecord->links('pagination::tailwind') }}
+        </div>
+    </div>
+
+    <x-footer-user />
 </body>
+</html>

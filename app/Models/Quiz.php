@@ -24,4 +24,8 @@ class Quiz extends Model
         return $this->hasMany(Record::class);
         
     }
+    public function mcqs()
+    {
+        return $this->hasMany(Mcq::class, 'quiz_id', 'id');
+    }
 }

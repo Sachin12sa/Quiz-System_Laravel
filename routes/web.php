@@ -6,7 +6,7 @@ use App\Http\Controllers\UserController;
 Route::get('/',[UserController::class,'welcome']);
 Route::get('user-catagories',[UserController::class,'welcome']);
 
-
+Route::view('blog','blog');
 Route::get('/user-quiz-list/{id}/{category}',[UserController::class,'userQuizList']);
 Route::view('start-quiz','start-quiz');
 Route::get('/start-quiz/{id}/{name}',[UserController::class,'startQuiz']);
@@ -46,8 +46,11 @@ Route::get('/verify-user/{email}',[UserController::class,'verifyUser']);
 Route::middleware('CheckUserAuth')->group(function(){
     Route::get('/user-details',[UserController::class,'userDetails']);
     Route::post('/submit-next/{id}',[UserController::class,'submitAndNext']);
+    Route::get('/quiz-result/{recordId}', [QuizController::class, 'result'])
+    ->name('quiz.result');
     Route::get('/mcq/{id}', [UserController::class, 'showMcq'])->name('mcq.show');
     Route::get('/mcq/{id}/{name}',[UserController::class,'mcq']);
+    Route::get('/quiz/resume/{quiz}', [UserController::class, 'resumeQuiz'])->name('resume.quiz');
 });
 
 
@@ -58,6 +61,9 @@ Route::post('/user-forgot-password', [UserController::class,'userForgotPassword'
 Route::get('/user-forgot-password/{email}',[UserController::class, 'userResetForgetPassword']);
 Route::get('/user-set-forgot-password/{email}',[UserController::class, 'userResetForgetPassword']);
 Route::post('/user-set-forgot-password',[UserController::class, 'userSetForgetPassword']);
+Route::get('/certificate/download', [UserController::class, 'downloadCertificate'])
+    ->name('download.certificate');
+
 
 Route::middleware('CheckAdminAuth')->group(function(){
     Route::get("/dashboard",[AdminController::class,'dashboard']);
@@ -68,7 +74,7 @@ Route::middleware('CheckAdminAuth')->group(function(){
     Route::match(['get','post'], '/add-quiz', [AdminController::class, 'addQuiz'])->name('add.quiz');
     Route::post("/add-mcq",[AdminController::class,'addMCQs']);
     Route::get("/end-quiz",[AdminController::class,'endQuiz']);
-    Route::get("/show-quiz/{id}",[AdminController::class,'showQuiz']);
-    Route::get("/show-quiz/{id}/{quizName}",[AdminController::class,'showQuiz']);
+    // Route::get("/show-quiz/{id}",[AdminController::class,'showQuiz']);
+    Route::get("/show-quiz/{id}/{quizName?}",[AdminController::class,'showQuiz']);
     Route::get('/quiz-list/{id}/{category}', [AdminController::class, 'quizList']);
 });

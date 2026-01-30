@@ -12,4 +12,8 @@ class MCQ_Record extends Model
         return $query->join('mcqs','mcq_records.mcq_id','=','mcqs.id')
         ->select('mcqs.question','mcq_records.*');
     }
+    public function mcq()
+    {
+        return $this->belongsTo(Mcq::class, 'mcq_id');
+    }
 }

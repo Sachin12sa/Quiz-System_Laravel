@@ -183,15 +183,15 @@ class UserController extends Controller
 
          $isExist=MCQ_Record::where([
             ['record_id','=',$currentQuiz['recordId']],
-            ['mcq_id','=',$request->id],
+            ['mcq_id','=',$id],
         ])->count();
         if($isExist<1){
         $mcq_record=new MCQ_Record;
         $mcq_record->record_id=$currentQuiz['recordId'];
         $mcq_record->user_id=Session::get('user')->id;
-        $mcq_record->mcq_id=$request->id;
+        $mcq_record->mcq_id=$id;
         $mcq_record->selected_answer=$request->option;
-        if($request->option == MCQ::find($request->id)->correct_ans){
+        if($request->option == MCQ::find($id)->correct_ans){
              $mcq_record->is_correct=1;
 
         }else{
@@ -227,10 +227,75 @@ class UserController extends Controller
 
     }
 
-    function userDetails(){
-        $quizRecord=Record::WithQuiz()->where('user_id',Session::get('user')->id)->paginate(8);
-        return view('user-details',['quizRecord'=>$quizRecord]);
-    }
+    function userDetails()
+            {
+                $userId = Session::get('user')->id;
+
+                $quizRecord = Record::with('quiz.mcqs')->where('user_id', $userId)->paginate(8);
+
+                foreach ($quizRecord as $record) {
+                    $quizId = $record->quiz->id;
+
+                    $totalMcqs = $record->quiz->mcqs->count();
+
+                    $answeredMcqs = Mcq_Record::where('user_id', $userId)
+                        ->whereIn('mcq_id', $record->quiz->mcqs->pluck('id'))
+                        ->get();
+
+                    $answeredCount = $answeredMcqs->count();
+                    $correctCount = $answeredMcqs->where('is_correct', 1)->count();
+
+                    if ($answeredCount < $totalMcqs) {
+                        $record->status = 'incomplete';
+                        $record->percentage = ($answeredCount / $totalMcqs) * 100;
+                        $record->can_download = false;
+                    } else {
+                        $percentage = ($correctCount / $totalMcqs) * 100;
+                        $record->status = 'completed';
+                        $record->percentage = $percentage;
+                        $record->can_download = $percentage >= 70;
+                    }
+                }
+
+                return view('user-details', ['quizRecord' => $quizRecord]);
+            }
+    public function resumeQuiz($quizId)
+                {
+                    $userId = Session::get('user')->id;
+
+                    $record = Record::where('user_id', $userId)
+                        ->where('quiz_id', $quizId)
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                    if (!$record) {
+                        return redirect()->back()->with('error', 'You have not started this quiz yet.');
+                    }
+
+                    $answeredMcqs = MCQ_Record::where('record_id', $record->id)
+                        ->pluck('mcq_id')
+                        ->toArray();
+
+                    $nextMcq = Mcq::where('quiz_id', $quizId)
+                        ->whereNotIn('id', $answeredMcqs)
+                        ->orderBy('id')
+                        ->first();
+
+                    if (!$nextMcq) {
+                        return redirect()->route('quiz.result', $record->id);
+                    }
+
+                    $currentQuiz = [
+                        'currentMcq' => MCQ_Record::where('record_id', $record->id)->count() + 1,
+                        'currentQuiz' => str_replace('-', ' ', $record->quiz->name ?? 'Quiz'),
+                        'quizId' => $quizId,
+                        'recordId' => $record->id,
+                        'totalMcq' => Mcq::where('quiz_id', $quizId)->count()
+                    ];
+                    Session::put('currentQuiz', $currentQuiz);
+
+                    return redirect()->route('mcq.show', $nextMcq->id);
+                }
     function searchQuiz(Request $request){
           $quizData = Quiz::withCount("Mcq")->where('name','Like','%'.$request->search.'%')->get();
         return view('quiz-search',['quizData'=>$quizData,'quiz'=>$request->search]);
@@ -292,17 +357,43 @@ class UserController extends Controller
             return view('certificate',['data'=>$data]);
             
         }
-        function downloadCertificate(){
-            $data=[];
-            $data['quiz']=str_replace('-',' ',Session::get('currentQuiz')['currentQuiz']) ;
-            $data['name']=Session::get('user')['name'];
-            $html= view('download-certificate',['data'=>$data])->render();
-            return response(
-                Browsershot::html($html)->pdf()
-            )->withHeaders([
-                'content-type'=>"application/pdf",
-                'content-disposition'=>"attachment;filename=certificate.pdf"
-            ]);
+        public function downloadCertificate(Request $request)
+                {
+                    $currentQuiz = Session::get('currentQuiz');
+                    $userId = Session::get('user')->id;
 
-        }
+                    if (!$currentQuiz) {
+                        return redirect()->back()->with('error', 'Quiz session not found.');
+                    }
+
+                    $recordId = $currentQuiz['recordId'];
+
+                    // Calculate score
+                    $total = MCQ_Record::where('record_id', $recordId)->count();
+                    $correct = MCQ_Record::where('record_id', $recordId)
+                        ->where('is_correct', 1)
+                        ->count();
+
+                    $percentage = $total > 0 ? ($correct / $total) * 100 : 0;
+
+                    if ($percentage < 70) {
+                        return redirect()->back()->with('error', 'Your score is less than 70%');
+                    }
+
+                    $data = [
+                        'quiz' => $currentQuiz['currentQuiz'],
+                        'name' => Session::get('user')['name'],
+                        'percentage' => round($percentage, 2)
+                    ];
+
+                    // Render the HTML of your download-certificate.blade.php
+                    $html = view('download-certificate', ['data' => $data])->render();
+
+                    return response(
+                        Browsershot::html($html)->pdf()
+                    )->withHeaders([
+                        'content-type' => "application/pdf",
+                        'content-disposition' => "attachment;filename=certificate.pdf"
+                    ]);
+                }
     }

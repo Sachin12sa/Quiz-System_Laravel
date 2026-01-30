@@ -3,61 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCQs Page</title>
-
+    <title>MCQs Page - {{ $quizName }}</title>
     @vite('resources/css/app.css')
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
 
 <x-user-navbar/>
 
+<div class="flex flex-col items-center min-h-screen pt-8 px-4 md:px-0">
+    <!-- Quiz Title -->
+    <h1 class="text-3xl md:text-4xl font-extrabold text-green-700 text-center mb-4">
+        {{ $quizName }}
+    </h1>
 
-<div class="flex flex-col items-center min-h-screen pt-8 w-full">
-    <h2 class="text-2xl text-center text-green-800 font-bold mb-4 pt-7">
-        {{$quizName}}
-    </h2>
-     <h2 class="text-2xl text-center text-green-800 font-bold mb-4 pt-7">
-        Question No. {{ session('currentQuiz')['currentMcq'] }}
-    </h2>
-    <h2 class="text-xl text-center text-green-800 font-bold mb-4 pt-7">
-        {{session('currentQuiz')['currentMcq']}} of {{session('currentQuiz')['totalMcq']}}
-    </h2>
-    <div class="mt-2 p-4 bg-white shadow-2xl rounded-xl w-150">
-        <h3 class="text-green-900 font-bold text-xl mb-1">{{$mcqData->question}}</h3>
-        <form action="/submit-next/{{$mcqData->id}}" class="space-y-4" method="post">
+    <!-- Question Number -->
+    <p class="text-lg md:text-xl text-green-800 font-semibold mb-2">
+        Question {{ session('currentQuiz')['currentMcq'] }} of {{ session('currentQuiz')['totalMcq'] }}
+    </p>
+
+    <!-- MCQ Card -->
+    <div class="mt-4 p-6 bg-white rounded-2xl shadow-xl w-full max-w-2xl">
+        <h2 class="text-xl md:text-2xl font-bold text-green-900 mb-6">
+            {{ $mcqData->question }}
+        </h2>
+
+        <form action="/submit-next/{{ $mcqData->id }}" method="POST" class="space-y-4">
             @csrf
-            <input type="hidden" name="id" value="{{$mcqData->id}}">
-            <label for="option_1" class=" flex border p-3 rounded-2xl shadow-2xl cursor-pointer hover:bg-blue-50">
-                <input id="option_1" class="form-radio" type="radio" value="a" name="option">
-                <span class="text-green-900 pl-2">{{$mcqData->a}}</span>
-            </label>
-            <label for="option_2" class=" flex border p-3 rounded-2xl shadow-2xl hover:bg-blue-50 ">
-                <input id="option_2" class="form-radio" type="radio" value="b" name="option">
-                <span class="text-green-900 pl-2">{{$mcqData->b}}</span>
-            </label>
-            <label for="option_3" class=" flex border p-3 rounded-2xl shadow-2xl hover:bg-blue-50 ">
-                <input id="option_3"  class="form-radio" type="radio" value="c" name="option">
-                <span class="text-green-900 pl-2">{{$mcqData->c}}</span>
-            </label>
-            <label for="option_4" class=" flex border p-3 rounded-2xl shadow-2xl hover:bg-blue-50 ">
-                <input id="option_4"  class="form-radio" type="radio" value="d" name="option">
-                <span class="text-green-900 pl-2">{{$mcqData->d}}</span>
-            </label>
-             <button class="w-full bg-blue-500 text-white rounded-xl py-2">Submit Answer and Next</button>
-            <div>
-                @if ($errors->has('option'))
-                    <p class="text-red-500 text-sm mt-2">
-                        {{ $errors->first('option') }}
-                    </p>
-                @endif
+            <input type="hidden" name="id" value="{{ $mcqData->id }}">
 
-            </div>
+            <!-- Options -->
+            @foreach (['a', 'b', 'c', 'd'] as $opt)
+                <label for="option_{{ $opt }}" 
+                       class="flex items-center border border-gray-300 p-3 rounded-2xl shadow hover:bg-blue-50 cursor-pointer transition duration-150">
+                    <input id="option_{{ $opt }}" type="radio" name="option" value="{{ $opt }}" class="form-radio h-5 w-5 text-green-500">
+                    <span class="pl-3 text-green-900">{{ $mcqData->$opt }}</span>
+                </label>
+            @endforeach
+
+            @if ($errors->has('option'))
+                <p class="text-red-500 text-sm mt-1">{{ $errors->first('option') }}</p>
+            @endif
+
+            <button type="submit" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl shadow-md transition duration-150">
+                Submit Answer & Next
+            </button>
         </form>
-
     </div>
-   
 </div>
 
+<x-footer-user />
+
 </body>
-<x-footer-user> </x-footer-user>
 </html>

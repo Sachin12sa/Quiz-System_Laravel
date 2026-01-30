@@ -45,14 +45,14 @@
         <!-- Recipient Name -->
         <div class="text-center mt-10">
             <h2 class="text-5xl font-bold text-gray-800 underline decoration-indigo-600">
-                John Doe
+                {{$data['name']}}
             </h2>
         </div>
 
         <!-- Description -->
         <div class="text-center mt-10 px-16">
             <p class="text-lg text-gray-700 leading-relaxed">
-                For successfully completing the <span class="font-semibold">Laravel Quiz System</span>
+                For successfully completing the <span class="font-semibold">{{$data['quiz']}}</span>
                 with outstanding performance and demonstrating excellent knowledge and skills.
             </p>
         </div>

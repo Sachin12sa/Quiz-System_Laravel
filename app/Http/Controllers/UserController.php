@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session; 
 use Illuminate\Support\Facades\Mail; 
 use Illuminate\Support\Facades\Crypt; 
-
+use Spatie\Browsershot\Browsershot;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Quiz;
@@ -19,8 +19,17 @@ use App\Mail\UserForgetPassword;
 class UserController extends Controller
 {
     function welcome(){
-          $categories=Category::withCount('quizzes')->get();
-        return view('welcome',['categories'=>$categories]);
+        $categories=Category::withCount('quizzes')->get();
+
+        $categories=Category::withCount('quizzes')->orderBy('quizzes_count','desc')->take(5)->get();
+        $quizData = Quiz::withCount("Records")->orderBy('records_count','desc')->take(5)->get();
+
+        return view('welcome',['categories'=>$categories,'quizData'=>$quizData]);
+    }
+    function userCategories(){
+        $categories=Category::withCount('quizzes')->paginate(8);
+        return view('user-categories',['categories'=>$categories]);
+
     }
     function userQuizList($id, $category){
         $quizData = Quiz::withCount("Mcq")->where('category_id', $id)->get();
@@ -30,6 +39,7 @@ class UserController extends Controller
                 'category' => $category
             ]);
     }
+
     function startQuiz($id,$name){
         $quizCount= Mcq::where('quiz_id',$id)->count();
         $mcqs= Mcq::where('quiz_id',$id)->get();
@@ -65,9 +75,9 @@ class UserController extends Controller
             if(Session::has('quiz-url')){
             $url=Session::get('quiz-url'); 
             Session::forget('quiz-url');
-            return redirect($url)->with('message',"user registered successfully");
+            return redirect($url)->with('message-success',"User registered successfully,Please Check email to verify account.");
         }else{
-        return redirect('/')->with('message',"user registered successfully");
+        return redirect('/')->with('message-success',"User registered successfully,Please Check email to verify account.");
         }
         }
     }
@@ -87,7 +97,8 @@ class UserController extends Controller
         ]);
         $user =User::where('email',$request->email)->first();
             if(!$user || !Hash::check($request->password,$user->password)){
-                return "User not valid, Please check email and password again";
+                return redirect('user-login')->with('message-error',"User not valid, Please check email and password again");
+            
             }
         
         if($user){
@@ -112,7 +123,7 @@ class UserController extends Controller
         $record->quiz_id=Session::get('firstMCQ')->quiz_id;
         $record->status=1;
         if($record->save()){
-            $currentQuiz=[];
+        $currentQuiz=[];
         $currentQuiz['totalMcq']=MCQ::where('quiz_id',Session::get('firstMCQ')->quiz_id)->count();
         $currentQuiz['currentMcq']=1;
         $currentQuiz['currentQuiz']=$name;
@@ -135,7 +146,34 @@ class UserController extends Controller
         
 
     }
+    public function showMcq($id)
+{
+    $currentQuiz = Session::get('currentQuiz');
+
+    if (!$currentQuiz) {
+        return redirect('/')->with('error', 'Quiz session expired.');
+    }
+
+    $mcqData = MCQ::where([
+        ['id', '=', $id],
+        ['quiz_id', '=', $currentQuiz['quizId']],
+    ])->first();
+
+    if (!$mcqData) {
+        return redirect('/')->with('error', 'Question not found.');
+    }
+
+    return view('mcq-page', [
+        'quizName' => $currentQuiz['currentQuiz'],
+        'mcqData'  => $mcqData,
+    ]);
+}
     function submitAndNext(Request $request, $id){
+        if (!$request->has('option')) {
+            return redirect()->back()
+                ->withErrors(['option' => 'Please select the answer before submitting.'])
+                ->withInput();
+        }
         $currentQuiz=Session::get('currentQuiz');
         $currentQuiz['currentMcq'] +=1;
         $mcqData=MCQ::where([
@@ -167,6 +205,7 @@ class UserController extends Controller
 
         Session::put('currentQuiz',$currentQuiz);
         if($mcqData){
+            return redirect()->route('mcq.show', $mcqData->id);
             return view('mcq-page',['quizName'=>$currentQuiz['currentQuiz'],'mcqData'=>$mcqData]);
 
         }else{
@@ -189,7 +228,7 @@ class UserController extends Controller
     }
 
     function userDetails(){
-        $quizRecord=Record::WithQuiz()->where('user_id',Session::get('user')->id)->get();
+        $quizRecord=Record::WithQuiz()->where('user_id',Session::get('user')->id)->paginate(8);
         return view('user-details',['quizRecord'=>$quizRecord]);
     }
     function searchQuiz(Request $request){
@@ -204,19 +243,66 @@ class UserController extends Controller
             $user->active=2;
         if( $user->save())
             {
-                return redirect('/');
+                return redirect('/')->with('message-success',"User verified successfully.");
+
             }
 
         }
     }
-    function userForgotPassword(Request $request){
-        $link = Crypt::encryptString($request->email);
-        $link =url('user-forget-password/'.$link);
-        Mail::to($request->email)->send(new VerifyUser($link));
+    function userForgotPassword(Request $request)
+        {
+            $request->validate([
+                'email' => 'required|email'
+            ]);
 
-        return redirect('/');
+            $encrypted = Crypt::encryptString($request->email);
+            $link = url('/user-set-forgot-password/' . $encrypted);
+
+            Mail::to($request->email)->send(
+                new UserForgetPassword($link)
+            );
+
+                return redirect('/')->with('message-success',"Email send to your account successfully.");
+        }
+
+    function userResetForgetPassword($email)
+        {
+        $orgEmail = Crypt::decryptString($email);
+        return view('user-set-forgot-password', ['email' => $orgEmail]);
+        }
+    function userSetForgetPassword(Request $request){
+         $validate = $request->validate([
+            'email'=>'required|email',
+            'password'=>'required|min:4|confirmed',
+        ]);
+        $user =User::where('email',$request->email)->first();
+        if($user){
+            $user->password=Hash::make($request->password);
+            
+            if($user->save()){
+                return redirect('user-login')->with('message-success',"Your password is set,try logging with your new password");
+        }
+
+            }
+        }
+        function certificate(){
+            $data=[];
+            $data['quiz']=str_replace('-',' ',Session::get('currentQuiz')['currentQuiz']) ;
+            $data['name']=Session::get('user')['name'];
+            return view('certificate',['data'=>$data]);
+            
+        }
+        function downloadCertificate(){
+            $data=[];
+            $data['quiz']=str_replace('-',' ',Session::get('currentQuiz')['currentQuiz']) ;
+            $data['name']=Session::get('user')['name'];
+            $html= view('download-certificate',['data'=>$data])->render();
+            return response(
+                Browsershot::html($html)->pdf()
+            )->withHeaders([
+                'content-type'=>"application/pdf",
+                'content-disposition'=>"attachment;filename=certificate.pdf"
+            ]);
+
+        }
     }
-    function userResetForgetPassword(){
-        return $email;
-    }
-}

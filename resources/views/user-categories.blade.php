@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz System Home Page</title>
+    <title>Categories Page</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -64,36 +64,13 @@
                 </tr>
                 @endforeach
                 </tbody>
+                
 
             </table>
+            <div class="mb-7 mt-5">
+                    {{$categories->links()}}
+                </div>
         </div>
-         <h2 class="text-2xl text-green-900   mb-4 text-center mt-7">
-               Top Quizzes List
-            </h2>
-        <div class="bg-white mt-4 p-6 rounded-xl shadow-lg w-full max-w-3xl overflow-x-auto">
-        <table class="w-full border border-gray-300">
-            <thead class="bg-gray-200">
-                <tr>
-                    <th class="p-2 border w-100">Name</th>
-                    <th class="p-2 border w-30">Action</th>
-
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($quizData as $item)
-                <tr class="text-center even:bg-gray-100">
-                    <td class="p-2 border">{{ $item->name }}</td>
-                    <td class="w-30 p-2 border ">
-                    <a href="/start-quiz/{{$item->id}}/{{$item->name}}" class="text-green-500 font-bold ">Attempt Quiz</a>
-        </td>
-                </tr>
-                @empty
-                
-                    
-                @endforelse
-            </tbody>
-        </table>
-    </div>
 
     </div>
 

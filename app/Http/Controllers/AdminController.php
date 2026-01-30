@@ -7,7 +7,7 @@ use App\Models\Admin;
 use Illuminate\Support\Facades\Session;
 use App\Models\category;
 use App\Models\Quiz;
-
+use App\Models\User;
 use App\Models\Mcq;
 class AdminController extends Controller
 {
@@ -35,9 +35,10 @@ class AdminController extends Controller
     function dashboard(){
         $admin = Session::get('admin');   
         if($admin){
-        return view('admin',["name"=>$admin->name]);
+            $users =User::orderBy('id','desc')->paginate(6);
+        return view('admin',["name"=>$admin->name,'users'=>$users]);
         }else{
-            // return redirect('admin-login');
+            return redirect('admin-login');
 
         }
         }
@@ -171,7 +172,6 @@ class AdminController extends Controller
             ]);
             
         }
-       
         
     function quizList($id, $category){
         $admin = Session::get('admin');

@@ -35,13 +35,19 @@
                         <span class="text-orange-500">Not Complete</span>
                         @endif
                     </td>
-          
+                    
                 </tr>
                 @endforeach
                 </tbody>
+                
+        </div>
+        
 
             </table>
         </div>
+         <div class="mb-7 mt-5">
+                    {{$quizRecord->links()}}
+                </div>
 </div>
 <x-footer-user> </x-footer-user>
 

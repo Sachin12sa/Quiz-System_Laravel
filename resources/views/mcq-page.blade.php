@@ -17,7 +17,7 @@
         {{$quizName}}
     </h2>
      <h2 class="text-2xl text-center text-green-800 font-bold mb-4 pt-7">
-        Question No.{{session('currentQuiz')['totalMcq']}}
+        Question No. {{ session('currentQuiz')['currentMcq'] }}
     </h2>
     <h2 class="text-xl text-center text-green-800 font-bold mb-4 pt-7">
         {{session('currentQuiz')['currentMcq']}} of {{session('currentQuiz')['totalMcq']}}
@@ -44,7 +44,14 @@
                 <span class="text-green-900 pl-2">{{$mcqData->d}}</span>
             </label>
              <button class="w-full bg-blue-500 text-white rounded-xl py-2">Submit Answer and Next</button>
+            <div>
+                @if ($errors->has('option'))
+                    <p class="text-red-500 text-sm mt-2">
+                        {{ $errors->first('option') }}
+                    </p>
+                @endif
 
+            </div>
         </form>
 
     </div>
